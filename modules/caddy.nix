@@ -26,6 +26,14 @@ let
         file_server
       }
 
+      handle /thumbnail/* {
+        ${lib.strings.optionalString (cfg.fallbackMediaUrl != "") ''
+        @notStatic not file
+        redir @notStatic ${lib.strings.removeSuffix "/" cfg.fallbackMediaUrl}{path}
+        ''}
+        file_server
+      }
+
       handle_errors {
         respond "{err.status_code} {err.status_text}"
       }
