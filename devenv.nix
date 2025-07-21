@@ -22,7 +22,7 @@ in {
 
     languages.javascript = {
       enable = lib.mkDefault true;
-      package = lib.mkDefault pkgs.nodejs-18_x;
+      package = lib.mkDefault pkgs.nodejs_20;
     };
 
     services.redis.enable = lib.mkDefault true;
