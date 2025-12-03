@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- https://phpunit.readthedocs.io/en/latest/configuration.html -->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         backupGlobals="false"
+         colors="true"
+         failOnNotice="true"
+         failOnWarning="true"
+         bootstrap="tests/bootstrap.php"
+         cacheDirectory=".phpunit.cache"
+>
+    <php>
+        <ini name="display_errors" value="1" />
+        <ini name="error_reporting" value="-1" />
+        <server name="APP_ENV" value="test" force="true" />
+        <server name="SHELL_VERBOSITY" value="-1" />
+
+        <!-- ###+ shopware/core ### -->
+        <env name="APP_ENV" value="prod"/>
+        <env name="APP_URL" value="http://127.0.0.1:8000"/>
+        <env name="APP_SECRET" value="545c03cf70e863f8855eab4ae51d8f41"/>
+        <env name="INSTANCE_ID" value="27937512eb315cec24540c7348584cf3"/>
+        <env name="BLUE_GREEN_DEPLOYMENT" value="0"/>
+        <env name="DATABASE_URL" value="mysql://root:root@localhost/shopware"/>
+        <!-- With Shopware 6.4.17.0 the MAILER_DSN variable will be used in this template instead of MAILER_URL -->
+        <env name="MAILER_URL" value="null://null"/>
+        <!-- ###- shopware/core ### -->
+
+        <!-- ###+ symfony/messenger ### -->
+        <!-- Choose one of the transports below -->
+        <!-- MESSENGER_TRANSPORT_DSN=amqp://guest:guest@localhost:5672/%2f/messages -->
+        <!-- MESSENGER_TRANSPORT_DSN=redis://localhost:6379/messages -->
+        <!-- doctrine://default?auto_setup=0 -->
+        <!-- ###- symfony/messenger ### -->
+
+        <!-- ###+ symfony/mailer ### -->
+        <!-- MAILER_DSN=null://null -->
+        <!-- ###- symfony/mailer ### -->
+
+        <!-- ###+ symfony/lock ### -->
+        <!-- Choose one of the stores below -->
+        <!-- postgresql+advisory://db_user:db_password@localhost/db_name -->
+        <env name="LOCK_DSN" value="flock"/>
+        <!-- ###- symfony/lock ### -->
+
+        <!-- ###+ shopware/storefront ### -->
+        <env name="PROXY_URL" value="http://localhost"/>
+        <env name="SHOPWARE_HTTP_CACHE_ENABLED" value="1"/>
+        <env name="SHOPWARE_HTTP_DEFAULT_TTL" value="7200"/>
+        <!-- ###- shopware/storefront ### -->
+
+        <!-- ###+ shopware/elasticsearch ### -->
+        <env name="OPENSEARCH_URL" value="http://localhost:9200"/>
+        <env name="SHOPWARE_ES_ENABLED" value="0"/>
+        <env name="SHOPWARE_ES_INDEXING_ENABLED" value="0"/>
+        <env name="SHOPWARE_ES_INDEX_PREFIX" value="sw"/>
+        <env name="SHOPWARE_ES_THROW_EXCEPTION" value="1"/>
+        <!-- ###- shopware/elasticsearch ### -->
+    </php>
+
+    <testsuites>
+        <testsuite name="Project Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <source ignoreSuppressionOfDeprecations="true" restrictNotices="true" restrictWarnings="true">
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+
+    <extensions>
+    </extensions>
+</phpunit>

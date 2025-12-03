@@ -1,0 +1,46 @@
+build:
+  # Browserlist configuration for Storefront
+  browserslist: 'defaults'
+deployment:
+  hooks:
+    pre: |
+      echo "Before deployment general"
+    post: |
+      composer symfony:dump-env
+    pre-install: |
+      echo "Before running system:install"
+    post-install: |
+      echo "After running system:install"
+    pre-update: |
+      echo "Before running system:update"
+    post-update: |
+      echo "After running system:update"
+
+  # Automatically installs and updates all extensions included in custom/plugins and custom/apps and composer
+  extension-management:
+    enabled: true
+
+    # These extensions are not managed, you should use one-time-tasks to manage them
+    exclude:
+      - SwagAmazonPay
+
+  store:
+    license-domain: 'www.holz-leute.de'
+
+dump:
+  nodata:
+    - cleverreach_entity
+    - cleverreach_archived_entity
+    - cleverreach_data_resources_entity
+    - cbax_analytics_invoice_date
+    - cbax_analytics_category_impressions
+    - cbax_analytics_product_impressions
+    - cbax_analytics_manufacturer_impressions
+    - frosh_mail_archive
+    - customer
+    - state_machine_history
+    - order
+    - order_delivery
+    - order_delivery_position
+    - order_line_item
+    - order_transaction

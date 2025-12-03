@@ -1,0 +1,24 @@
+hosts:
+  production:
+    stage: production
+    hostname: %HOST%
+    labels:
+      type: web
+      env: production
+    remote_user: %USER%
+    deploy_path: %PATH%
+    http_user: %HTTPUSER%
+    writable_mode: chmod
+    keep_releases: 3
+
+  staging:
+    stage: staging
+    hostname: %HOST%
+    labels:
+      type: web
+      env: development
+    remote_user: %USER%
+    deploy_path: %PATH%
+    http_user: %HTTPUSER%
+    writable_mode: chmod
+    keep_releases: 1

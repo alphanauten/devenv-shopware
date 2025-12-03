@@ -1,111 +1,146 @@
-{ pkgs, config, inputs, lib, ... }:
+{ pkgs, lib, config, inputs, ... }:
+
 let
-  cfg = config.kellerkinder;
+  pcov = config.languages.php.package.buildEnv {
+    extensions = { all, enabled }: with all; (builtins.filter (e: e.extensionName != "blackfire" && e.extensionName != "xdebug") enabled) ++ [config.languages.php.package.extensions.pcov];
+    extraConfig = config.languages.php.ini;
+  };
 
-  currentVersion = "v2.2.0";
-
-  listEntries = path:
-    map (name: path + "/${name}") (builtins.attrNames (builtins.readDir path));
-
-  shopwareCliPackage = if builtins.hasAttr "froshpkgs" inputs
-      then inputs.froshpkgs.packages.${pkgs.system}.shopware-cli
-      else pkgs.shopware-cli;
 in {
-  imports = (listEntries ./modules);
+  packages = [
+    pkgs.gnupatch
+    pkgs.nodePackages_latest.yalc
+    pkgs.gnused
+    pkgs.symfony-cli
+    pkgs.deno
+    pkgs.jq
+    pkgs.ludtwig
+    inputs.froshpkgs.packages.${pkgs.system}.shopware-cli
+    ( pkgs.writeShellScriptBin "php-pcov" ''
+      export PHP_INI_SCAN_DIR=''${PHP_INI_SCAN_DIR-'${pcov}/lib'}
+      exec -a "$0" "${pcov}/bin/.php-wrapped"  "$@"
+    '')
+  ];
 
-  config = lib.mkIf cfg.enable {
-    packages = [
-      pkgs.jq
-      pkgs.gnupatch
-      shopwareCliPackage
-    ] ++ cfg.additionalPackages;
+  # Fix .env loading
+  process.manager.implementation = lib.mkDefault "honcho";
 
-    languages.javascript = {
-      enable = lib.mkDefault true;
-      package = lib.mkDefault pkgs.nodejs_20;
+  dotenv.disableHint = true;
+
+  languages.javascript = {
+    enable = lib.mkDefault true;
+    package = lib.mkDefault pkgs.nodejs_22;
+  };
+
+  languages.php = {
+    enable = lib.mkDefault true;
+    version = lib.mkDefault "8.3";
+    extensions = [ "grpc" "amqp"];
+
+    ini = ''
+      memory_limit = 2G
+      realpath_cache_ttl = 3600
+      session.gc_probability = 0
+      ${lib.optionalString config.services.redis.enable ''
+      session.save_handler = redis
+      session.save_path = "tcp://127.0.0.1:${toString config.services.redis.port}/0"
+      ''}
+      display_errors = On
+      error_reporting = E_ALL
+      assert.active = 0
+      opcache.memory_consumption = 256M
+      opcache.interned_strings_buffer = 20
+      zend.assertions = 0
+      short_open_tag = 0
+      zend.detect_unicode = 0
+      realpath_cache_ttl = 3600
+      post_max_size = 32M
+      upload_max_filesize = 32M
+    '';
+
+    fpm.pools.web = lib.mkDefault {
+      settings = {
+        "clear_env" = "no";
+        "pm" = "dynamic";
+        "pm.max_children" = 10;
+        "pm.start_servers" = 2;
+        "pm.min_spare_servers" = 1;
+        "pm.max_spare_servers" = 10;
+      };
+    };
+  };
+
+  services.caddy = {
+    enable = lib.mkDefault true;
+
+    virtualHosts.":8000" = lib.mkDefault {
+      extraConfig = lib.mkDefault ''
+        @default {
+          not path /theme/* /media/* /thumbnail/* /bundles/* /css/* /fonts/* /js/* /sitemap/*
+        }
+
+        encode zstd gzip
+        root * public
+        php_fastcgi @default unix/${config.languages.php.fpm.pools.web.socket} {
+            trusted_proxies private_ranges
+        }
+        file_server
+        encode
+
+        encode zstd gzip
+      '';
+    };
+  };
+
+    services.mysql = {
+      enable = true;
+      package = pkgs.mysql84;
+      initialDatabases = lib.mkDefault [{ name = "shopware"; }];
+      ensureUsers = lib.mkDefault [
+        {
+          name = "shopware";
+          password = "shopware";
+          ensurePermissions = {
+            "shopware.*" = "ALL PRIVILEGES";
+            "shopware_test.*" = "ALL PRIVILEGES";
+          };
+        }
+      ];
+      settings = {
+        mysqld = {
+          group_concat_max_len = 320000;
+          log_bin_trust_function_creators = 1;
+          sql_mode = "STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION";
+        };
+      };
     };
 
-    services.redis.enable = lib.mkDefault true;
-    services.redis.port = cfg.redisPort;
 
-    services.adminer.enable = lib.mkDefault true;
-    services.adminer.listen = lib.mkDefault "127.0.0.1:${toString cfg.adminerPort}";
+  services.redis.enable = lib.mkDefault true;
+  # WSL2 fix locale
+  services.redis.extraConfig = "locale-collate C";
+  services.adminer.enable = lib.mkDefault true;
+  services.adminer.package = lib.mkDefault pkgs.adminerevo;
+  services.adminer.listen = lib.mkDefault "127.0.0.1:9080";
+  services.mailpit.enable = lib.mkDefault true;
 
-    services.mailhog.enable = true;
-    services.mailhog.apiListenAddress = lib.mkDefault "127.0.0.1:${toString cfg.mailhogApiPort}";
-    services.mailhog.smtpListenAddress = lib.mkDefault "127.0.0.1:${toString cfg.mailhogSmtpPort}";
-    services.mailhog.uiListenAddress = lib.mkDefault "127.0.0.1:${toString cfg.mailhogUiPort}";
+  # services.opensearch.enable = true;
+  # services.rabbitmq.enable = true;
+  # services.rabbitmq.managementPlugin.enable = true;
 
-    services.elasticsearch.enable = cfg.enableElasticsearch;
-    services.elasticsearch.port = cfg.elasticsearchPort;
-    services.elasticsearch.tcp_port = cfg.elasticsearchTcpPort;
+  # Elasticsearch
+  env.OPENSEARCH_URL = lib.mkDefault "http://localhost:9200";
+  env.ADMIN_OPENSEARCH_URL = lib.mkDefault "http://localhost:9200";
 
-    services.opensearch.enable = cfg.enableOpenSearch;
-    services.opensearch.settings."http.port" = cfg.elasticsearchPort;
-    services.opensearch.settings."transport.port" = cfg.elasticsearchTcpPort;
+  # General cypress
+  env.CYPRESS_baseUrl = lib.mkDefault "http://localhost:8000";
 
-    services.rabbitmq.enable = cfg.enableRabbitMq;
-    services.rabbitmq.managementPlugin.enable = cfg.enableRabbitMq;
-    services.rabbitmq.port = cfg.rabbitMqPort;
-    services.rabbitmq.managementPlugin.port= cfg.rabbitMqManagementPluginPort;
+  # Installer/Updater testing
+  env.INSTALL_URL = lib.mkDefault "http://localhost:8050";
+  env.CYPRESS_dbHost = lib.mkDefault "localhost";
+  env.CYPRESS_dbUser = lib.mkDefault "shopware";
+  env.CYPRESS_dbPassword = lib.mkDefault "shopware";
+  env.CYPRESS_dbName = lib.mkDefault "shopware";
 
-    dotenv.disableHint = true;
-
-    scripts.versionCheck.exec = ''
-      AVAILABLE=$(${pkgs.curl}/bin/curl --silent "https://api.github.com/repos/kellerkinderDE/devenv-shopware/releases/latest" | ${pkgs.jq}/bin/jq -r .tag_name)
-
-      echo ""
-
-      if [ "$AVAILABLE" = "${currentVersion}" ]; then
-        echo -e "\e[32mYou are running the latest version of devenv-shopware\e[0m"
-      else
-        echo -e "\e[31mThere is a new version of devenv-shopware available: $AVAILABLE\e[0m"
-        echo -e "Please see https://github.com/kellerkinderDE/devenv-shopware/wiki/Update for further information"
-      fi
-
-      echo ""
-    '';
-
-    enterShell = ''
-      versionCheck
-    '';
-
-    # Environment variables
-    env = lib.mkMerge [
-      (lib.mkIf cfg.enable {
-        DATABASE_URL = lib.mkDefault "mysql://shopware:shopware@127.0.0.1:${toString cfg.mysqlPort}/shopware";
-        MAILER_URL = lib.mkDefault "smtp://127.0.0.1:${toString cfg.mailhogSmtpPort}?encryption=&auth_mode=";
-        MAILER_DSN = lib.mkDefault "smtp://127.0.0.1:${toString cfg.mailhogSmtpPort}?encryption=&auth_mode=";
-
-        APP_URL = lib.mkDefault "http://127.0.0.1:${toString cfg.httpPort}";
-        CYPRESS_baseUrl = lib.mkDefault "http://127.0.0.1:${toString cfg.httpPort}";
-
-        SQL_SET_DEFAULT_SESSION_VARIABLES = lib.mkDefault "0";
-
-        APP_SECRET = lib.mkDefault "devsecret";
-
-        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = true;
-        DISABLE_ADMIN_COMPILATION_TYPECHECK = true;
-
-        SHOPWARE_CACHE_ID = "dev";
-
-        NODE_OPTIONS = "--openssl-legacy-provider --max-old-space-size=2000";
-        NPM_CONFIG_ENGINE_STRICT = "false"; # hotfix for npm10
-      })
-      (lib.mkIf (config.services.elasticsearch.enable || config.services.opensearch.enable) {
-        SHOPWARE_ES_ENABLED = "1";
-        SHOPWARE_ES_INDEXING_ENABLED = "1";
-        SHOPWARE_ES_HOSTS = "127.0.0.1:${toString cfg.elasticsearchPort}";
-        OPENSEARCH_URL = "127.0.0.1:${toString cfg.elasticsearchPort}";
-        SHOPWARE_ES_THROW_EXCEPTION = "1";
-      })
-      (lib.mkIf config.services.rabbitmq.enable {
-        RABBITMQ_NODENAME = "rabbit@localhost"; # 127.0.0.1 can't be used as rabbitmq can't set short node name
-        RABBITMQ_NODE_PORT = "${toString cfg.rabbitMqPort}";
-      })
-      (lib.mkIf config.services.redis.enable {
-        REDIS_DSN = "redis://127.0.0.1:${toString cfg.redisPort}";
-      })
-    ];
-  };
+  env.SHOPWARE_PROJECT_ROOT = "/Users/alpha_nf/Alphanauten/Projects/Clients/Shopware6/HolzLeute";
 }

@@ -1,0 +1,134 @@
+{
+    "license": "proprietary",
+    "type": "project",
+    "require": {
+        "composer-runtime-api": "^2.0",
+        "alpha/foundation": "^1.0.1",
+        "alpha/holz-leute": "^1.0.5",
+        "alpha/netzp-blog-override": ">=1",
+        "alpha/variant-pre-selection-sw6": "^1.0",
+        "deployer/deployer": "^7.5.12",
+        "frosh/mail-platform-archive": "3.1.0",
+        "frosh/platform-html-minify": "2.1.0",
+        "frosh/platform-thumbnail-processor": "5.2.1",
+        "itratos/jtl-voucher": "^2.3",
+        "mediameets/mediameets-fb-pixel": "4.5.0",
+        "moorl/foundation": "^1.6",
+        "payone-gmbh/shopware-6": "6.1.2",
+        "shopware/administration": "6.6.10.1",
+        "shopware/conflicts": ">=0.4.0",
+        "shopware/core": "6.6.10.1",
+        "shopware/deployment-helper": "^0.0.27",
+        "shopware/elasticsearch": "6.6.10.1",
+        "shopware/storefront": "6.6.10.1",
+        "store.shopware.com/acrischeckoutmethodpreselectcs": ">=7.2.1",
+        "store.shopware.com/acriscountrytaxcs": ">=5.2.4",
+        "store.shopware.com/acrisseparatestreetcs": ">=3.1.7",
+        "store.shopware.com/alphainstagram": ">=2.3.3",
+        "store.shopware.com/cbaxmodulanalytics": "^4.0.9",
+        "store.shopware.com/cogietracker": ">=4.3",
+        "store.shopware.com/cogifreeproducts": ">=3.4.3",
+        "store.shopware.com/crswcleverreachofficial": ">=2.7.4",
+        "store.shopware.com/digi1cmselementteaser": ">=1.0.7",
+        "store.shopware.com/dtgsgoogletagmanagersw6": ">=6.3.16",
+        "store.shopware.com/dvsnbundle": ">=6.2",
+        "store.shopware.com/froshlazysizes": ">=3.2",
+        "store.shopware.com/froshplatformhtmlminify": ">=2.1",
+        "store.shopware.com/froshplatformmailarchive": ">=3.1",
+        "store.shopware.com/froshplatformthumbnailprocessor": ">=5.2.1",
+        "store.shopware.com/froshtools": ">=3.2.2",
+        "store.shopware.com/gooddayhoveronlistingsw6": ">=4.3",
+        "store.shopware.com/lenzbingadsconversiontracking2": ">=6.0.5",
+        "store.shopware.com/mart1mwfaq": ">=2.2.6",
+        "store.shopware.com/mediameetsfbpixel": ">=4.5",
+        "store.shopware.com/molliepayments": ">=4.19",
+        "store.shopware.com/moorlcmstwig": ">=1.6",
+        "store.shopware.com/moorlfoundation": "1.6.65",
+        "store.shopware.com/moorlfoundationunlock": ">=1.6",
+        "store.shopware.com/moorlinterrupter": ">=1.6.8",
+        "store.shopware.com/nenoheroslider": ">=2.1.1",
+        "store.shopware.com/nenomarketingessentials": ">=2.0.5",
+        "store.shopware.com/netinexteasycoupon": ">=6.13",
+        "store.shopware.com/netinexteasycoupondesigns": ">=6.5.4",
+        "store.shopware.com/netzpblog6": ">=3.4.4",
+        "store.shopware.com/nimbitsarticlequestionsnext": ">=1.8.1",
+        "store.shopware.com/payonepayment": ">=6.1.2",
+        "store.shopware.com/premsonepagecheckout6": ">=2.8.30",
+        "store.shopware.com/scopplatformredirecter": ">=3.1.3",
+        "store.shopware.com/solidproductvideos": ">=5.5.1",
+        "store.shopware.com/swagamazonpay": "10.2.2",
+        "store.shopware.com/swagcmsextensions": ">=4.7",
+        "store.shopware.com/swagplatformsecurity": ">=3.0.9",
+        "store.shopware.com/swpasort": "~1.5",
+        "store.shopware.com/tanmarngproductreviews": ">=2.4",
+        "store.shopware.com/tonurgiftwrap": ">=1.4.17",
+        "store.shopware.com/tonurpackstation6": ">=2.0.9",
+        "store.shopware.com/tonurseofilterlandingpages6": ">=1.7.2",
+        "store.shopware.com/vierpcountercmselement": ">=1.1",
+        "store.shopware.com/zeobvgetnotified": ">=2.3.23",
+        "swag/theme-skeleton": "^1.0",
+        "symfony/amqp-messenger": "^6.4.24",
+        "symfony/flex": "~2",
+        "symfony/runtime": ">=7.2.8",
+        "sysg/custom": "^1.0"
+    },
+    "repositories": {
+        "shopware-packages": {
+            "type": "composer",
+            "url": "https://packages.shopware.com"
+        },
+        "0": {
+            "type": "path",
+            "url": "custom/plugins/*",
+            "options": {
+                "symlink": true
+            }
+        },
+        "1": {
+            "type": "path",
+            "url": "custom/plugins/*/packages/*",
+            "options": {
+                "symlink": true
+            }
+        },
+        "2": {
+            "type": "path",
+            "url": "custom/static-plugins/*",
+            "options": {
+                "symlink": true
+            }
+        }
+    },
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true,
+            "symfony/runtime": true,
+            "php-http/discovery": true
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "scripts": {
+        "auto-scripts": [],
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ]
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": true,
+            "endpoint": [
+                "https://raw.githubusercontent.com/shopware/recipes/flex/main/index.json",
+                "flex://defaults"
+            ]
+        }
+    },
+    "require-dev": {
+        "symfony/stopwatch": "^7.2.4",
+        "symfony/web-profiler-bundle": "^7.2.9"
+    }
+}

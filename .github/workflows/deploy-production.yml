@@ -1,0 +1,31 @@
+name: Deployment to Production
+on:
+  workflow_dispatch:
+
+concurrency:
+  cancel-in-progress: true
+  group: deployment
+
+jobs:
+  check-secret:
+    runs-on: ubuntu-latest
+    outputs:
+      shopware-composer-token-exists: ${{ steps.shopware-composer-token.outputs.defined }}
+    steps:
+      - name: Check for Secret availability
+        id: shopware-composer-token
+        shell: bash
+        run: |
+          if [ "${{ secrets.SHOPWARE_PACKAGES_TOKEN }}" != '' ]; then
+            echo "defined=true" >> $GITHUB_OUTPUT;
+          else
+            echo "defined=false" >> $GITHUB_OUTPUT;
+          fi
+  build:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    name: Build & Deploy
+    needs: [check-secret]
+    uses: alphanauten/project-template-shopware/.github/workflows/reusable-deploy.yml@main
+    secrets: inherit
+    with:
+      environment: "production"

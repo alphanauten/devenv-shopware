@@ -1,0 +1,15 @@
+# Using the webupdater will overwrite this file. Create a second file z-shopware.yaml to override the config
+
+shopware:
+  deployment:
+    runtime_extension_management: false
+  auto_update:
+    enabled: false
+  admin_worker:
+    enable_admin_worker: false
+  staging:
+    sales_channel:
+      domain_rewrite:
+        - type: prefix
+          match: https://www.holz-leute.de
+          replace: https://www.holz-leute.de/staging
